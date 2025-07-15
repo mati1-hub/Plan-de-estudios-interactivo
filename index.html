@@ -36,3 +36,161 @@
   </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Malla Interactiva Psicología</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 1rem;
+    }
+    h2 {
+      margin-top: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+    .materia {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 3px solid #ccc;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .materia[data-tipo="general"] { border-color: #00bfff; }
+    .materia[data-tipo="clinica"] { border-color: #4CAF50; }
+    .materia[data-tipo="organizacional"] { border-color: #FFA500; }
+    .materia[data-tipo="complementaria"] { border-color: #999; }
+    .materia.aprobada {
+      text-decoration: line-through;
+      color: red;
+      opacity: 0.7;
+    }
+    .materia.bloqueada {
+      background: #eee;
+      cursor: not-allowed;
+      color: #999;
+    }
+    .tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      background: #333;
+      color: #fff;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+      white-space: pre-wrap;
+      border-radius: 4px;
+      display: none;
+    }
+    .materia:hover .tooltip {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Malla Interactiva - Psicología</h1>
+  
+  <h2>Complementarias</h2>
+  <div class="grid" id="complementarias"></div>
+
+  <h2>Plan de Estudios</h2>
+  <div id="plan"></div>
+
+  <script>
+    const materias = [
+      { nombre: "Aprender en el Siglo 21", id: "apr21", correlativas: [], tipo: "complementaria", cuatrimestre: "Complementarias" },
+      { nombre: "Tecnología, Humanidades y Modelos Globales", id: "tecHum", correlativas: [], tipo: "complementaria", cuatrimestre: "Complementarias" },
+      { nombre: "Idioma Extranjero 1", id: "idioma1", correlativas: [], tipo: "complementaria", cutrimestre: "Complementarias" },
+      { nombre: "Idioma Extranjero 2", id: "idioma2", correlativas: ["idioma1"], tipo: "complementaria", cuatrimestre: "Complementarias" },
+      { nombre: "Idioma Extranjero 3", id: "idioma3", correlativas: ["idioma2"], tipo: "complementaria", cuatrimestre: "Complementarias" },
+      { nombre: "Idioma Extranjero 4", id: "idioma4", correlativas: ["idioma3"], tipo: "complementaria", cuatrimestre: "Complementarias" },
+      // Aquí agregaremos todas las materias restantes usando la estructura
+    ];
+
+    const materiasPorCuatrimestre = {};
+
+    materias.forEach(m => {
+      if (!materiasPorCuatrimestre[m.cuatrimestre]) {
+        materiasPorCuatrimestre[m.cuatrimestre] = [];
+      }
+      materiasPorCuatrimestre[m.cuatrimestre].push(m);
+    });
+
+    function crearMateria(m) {
+      const div = document.createElement('div');
+      div.className = 'materia';
+      div.dataset.tipo = m.tipo;
+      div.dataset.id = m.id;
+      div.dataset.correlativas = JSON.stringify(m.correlativas);
+      div.textContent = m.nombre;
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tooltip';
+      tooltip.textContent = 'Correlativas: ' + (m.correlativas.length ? m.correlativas.join(', ') : 'Ninguna');
+      div.appendChild(tooltip);
+      div.addEventListener('click', () => {
+        if (div.classList.contains('bloqueada')) return;
+        div.classList.toggle('aprobada');
+        guardarEstado();
+        actualizarBloqueos();
+      });
+      return div;
+    }
+
+    function render() {
+      Object.entries(materiasPorCuatrimestre).forEach(([cuatri, lista]) => {
+        const h2 = document.createElement('h2');
+        h2.textContent = cuatri;
+        const contenedor = document.createElement('div');
+        contenedor.className = 'grid';
+        lista.forEach(m => contenedor.appendChild(crearMateria(m)));
+        document.getElementById(cuatri === 'Complementarias' ? 'complementarias' : 'plan').appendChild(h2);
+        document.getElementById(cuatri === 'Complementarias' ? 'complementarias' : 'plan').appendChild(contenedor);
+      });
+      cargarEstado();
+      actualizarBloqueos();
+    }
+
+    function guardarEstado() {
+      const estados = {};
+      document.querySelectorAll('.materia').forEach(m => {
+        estados[m.dataset.id] = m.classList.contains('aprobada');
+      });
+      localStorage.setItem('estadoMaterias', JSON.stringify(estados));
+    }
+
+    function cargarEstado() {
+      const estados = JSON.parse(localStorage.getItem('estadoMaterias') || '{}');
+      document.querySelectorAll('.materia').forEach(m => {
+        if (estados[m.dataset.id]) m.classList.add('aprobada');
+      });
+    }
+
+    function actualizarBloqueos() {
+      const aprobadas = new Set();
+      document.querySelectorAll('.materia.aprobada').forEach(m => aprobadas.add(m.dataset.id));
+
+      document.querySelectorAll('.materia').forEach(m => {
+        const correlativas = JSON.parse(m.dataset.correlativas);
+        let faltan = correlativas.filter(c => !aprobadas.has(c));
+        m.classList.toggle('bloqueada', faltan.length > 0 && correlativas.length);
+        const tooltip = m.querySelector('.tooltip');
+        if (tooltip) {
+          tooltip.textContent = 'Correlativas:\n' + (correlativas.length ? correlativas.map(c => aprobadas.has(c) ? `✅ ${c}` : `❌ ${c}`).join('\n') : 'Ninguna');
+        }
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
