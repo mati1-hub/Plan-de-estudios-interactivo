@@ -1,158 +1,231 @@
-<!DOCTYPE html>
+html_content = """<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Malla Interactiva Psicología</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Malla Interactiva - Psicología</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #f4f4f4;
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
       margin: 0;
-      padding: 1rem;
+      padding: 20px;
     }
-    h2 {
-      margin-top: 2rem;
+    h1, h2 {
+      text-align: center;
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 0.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+      margin-bottom: 40px;
     }
     .materia {
-      background: white;
-      padding: 1rem;
+      background: #fff;
+      padding: 12px;
       border-radius: 8px;
-      border: 3px solid #ccc;
+      border: 2px solid #ccc;
       position: relative;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: 0.3s;
     }
-    .materia[data-tipo="general"] { border-color: #00bfff; }
-    .materia[data-tipo="clinica"] { border-color: #4CAF50; }
-    .materia[data-tipo="organizacional"] { border-color: #FFA500; }
-    .materia[data-tipo="complementaria"] { border-color: #999; }
-    .materia.aprobada {
-      text-decoration: line-through;
-      color: red;
-      opacity: 0.7;
+    .materia:hover {
+      background-color: #e6f7ff;
     }
     .materia.bloqueada {
-      background: #eee;
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
       cursor: not-allowed;
-      color: #999;
+    }
+    .materia.aprobada {
+      text-decoration: line-through;
+      border-color: #d9534f;
+      background: #fbecec;
     }
     .tooltip {
       position: absolute;
-      bottom: 100%;
-      left: 0;
+      top: -5px;
+      right: -5px;
       background: #333;
-      color: #fff;
-      padding: 0.3rem 0.5rem;
-      font-size: 0.75rem;
-      white-space: pre-wrap;
+      color: white;
+      padding: 5px 8px;
       border-radius: 4px;
+      font-size: 12px;
       display: none;
     }
     .materia:hover .tooltip {
       display: block;
     }
+    .cuatrimestre {
+      margin-bottom: 25px;
+    }
+    .especial {
+      background-color: #d1ecf1;
+      border-color: #bee5eb;
+    }
+    .clinica {
+      border-left: 6px solid #ff69b4;
+    }
+    .organizacional {
+      border-left: 6px solid #007bff;
+    }
   </style>
 </head>
 <body>
-  <h1>Malla Interactiva - Psicología</h1>
-  
-  <h2>Complementarias</h2>
-  <div class="grid" id="complementarias"></div>
 
-  <h2>Plan de Estudios</h2>
-  <div id="plan"></div>
+<h1>Malla Interactiva - Psicología (Siglo 21)</h1>
+<p style="text-align: center;">Hacé clic en una materia para marcarla como aprobada. Las materias se desbloquean según sus correlativas.</p>
 
-  <script>
-    const materias = [
-      { nombre: "Aprender en el Siglo 21", id: "apr21", correlativas: [], tipo: "complementaria", cuatrimestre: "Complementarias" },
-      { nombre: "Tecnología, Humanidades y Modelos Globales", id: "tecHum", correlativas: [], tipo: "complementaria", cuatrimestre: "Complementarias" },
-      { nombre: "Idioma Extranjero 1", id: "idioma1", correlativas: [], tipo: "complementaria", cutrimestre: "Complementarias" },
-      { nombre: "Idioma Extranjero 2", id: "idioma2", correlativas: ["idioma1"], tipo: "complementaria", cuatrimestre: "Complementarias" },
-      { nombre: "Idioma Extranjero 3", id: "idioma3", correlativas: ["idioma2"], tipo: "complementaria", cuatrimestre: "Complementarias" },
-      { nombre: "Idioma Extranjero 4", id: "idioma4", correlativas: ["idioma3"], tipo: "complementaria", cuatrimestre: "Complementarias" },
-      // Aquí agregaremos todas las materias restantes usando la estructura
-    ];
+<div id="malla-container"></div>
 
-    const materiasPorCuatrimestre = {};
+<script>
+  const materias = [
+    // Ejemplo de estructura:
+    // { nombre: "Materia", id: "codigo", correlativas: ["id1", "id2"], tipo: "clinica/organizacional/especial", anio: 1, cuatri: 1 }
 
-    materias.forEach(m => {
-      if (!materiasPorCuatrimestre[m.cuatrimestre]) {
-        materiasPorCuatrimestre[m.cuatrimestre] = [];
+    { nombre: "Aprender en el Siglo 21", id: "apr_siglo21", correlativas: [], tipo: "especial", anio: 1, cuatri: 1 },
+    { nombre: "Tecnología, Humanidades y Modelos Globales", id: "tec_hum", correlativas: [], tipo: "especial", anio: 1, cuatri: 1 },
+    { nombre: "Idioma extranjero 1", id: "idioma_1", correlativas: [], tipo: "especial", anio: 1, cuatri: 1 },
+    { nombre: "Idioma extranjero 2", id: "idioma_2", correlativas: ["idioma_1"], tipo: "especial", anio: 1, cuatri: 2 },
+    { nombre: "Idioma extranjero 3", id: "idioma_3", correlativas: ["idioma_2"], tipo: "especial", anio: 2, cuatri: 1 },
+    { nombre: "Idioma extranjero 4", id: "idioma_4", correlativas: ["idioma_3"], tipo: "especial", anio: 2, cuatri: 2 },
+
+    // Se cargarán todas las demás materias después aquí...
+
+  ];
+
+  const aprobadas = JSON.parse(localStorage.getItem("materiasAprobadas") || "[]");
+
+  function crearMateria(materia) {
+    const div = document.createElement("div");
+    div.className = "materia";
+    div.dataset.id = materia.id;
+    div.classList.add(materia.tipo || "general");
+
+    const correlativasFaltan = materia.correlativas.some(c => !aprobadas.includes(c));
+    if (correlativasFaltan && materia.correlativas.length > 0) {
+      div.classList.add("bloqueada");
+    }
+
+    if (aprobadas.includes(materia.id)) {
+      div.classList.add("aprobada");
+    }
+
+    div.innerHTML = \`
+      \${materia.nombre}
+      <div class="tooltip">Correlativas: \${materia.correlativas.map(c => materias.find(m => m.id === c)?.nombre || c).join(", ") || "Ninguna"}</div>
+    \`;
+
+    div.addEventListener("click", () => {
+      if (div.classList.contains("bloqueada")) return;
+
+      if (div.classList.contains("aprobada")) {
+        div.classList.remove("aprobada");
+        const index = aprobadas.indexOf(materia.id);
+        if (index > -1) aprobadas.splice(index, 1);
+      } else {
+        div.classList.add("aprobada");
+        aprobadas.push(materia.id);
       }
-      materiasPorCuatrimestre[m.cuatrimestre].push(m);
+
+      localStorage.setItem("materiasAprobadas", JSON.stringify(aprobadas));
+      renderMalla();
     });
 
-    function crearMateria(m) {
-      const div = document.createElement('div');
-      div.className = 'materia';
-      div.dataset.tipo = m.tipo;
-      div.dataset.id = m.id;
-      div.dataset.correlativas = JSON.stringify(m.correlativas);
-      div.textContent = m.nombre;
-      const tooltip = document.createElement('div');
-      tooltip.className = 'tooltip';
-      tooltip.textContent = 'Correlativas: ' + (m.correlativas.length ? m.correlativas.join(', ') : 'Ninguna');
-      div.appendChild(tooltip);
-      div.addEventListener('click', () => {
-        if (div.classList.contains('bloqueada')) return;
-        div.classList.toggle('aprobada');
-        guardarEstado();
-        actualizarBloqueos();
-      });
-      return div;
+    return div;
+  }
+
+  function renderMalla() {
+    const container = document.getElementById("malla-container");
+    container.innerHTML = "";
+
+    for (let anio = 1; anio <= 5; anio++) {
+      for (let cuatri = 1; cuatri <= 2; cuatri++) {
+        const cuatriMaterias = materias.filter(m => m.anio === anio && m.cuatri === cuatri);
+
+        if (cuatriMaterias.length === 0) continue;
+
+        const cuatriDiv = document.createElement("div");
+        cuatriDiv.className = "cuatrimestre";
+        cuatriDiv.innerHTML = \`
+          <h2>Año \${anio} - Cuatrimestre \${cuatri}</h2>
+          <div class="grid"></div>
+        \`;
+
+        const grid = cuatriDiv.querySelector(".grid");
+        cuatriMaterias.forEach(m => grid.appendChild(crearMateria(m)));
+        container.appendChild(cuatriDiv);
+      }
     }
 
-    function render() {
-      Object.entries(materiasPorCuatrimestre).forEach(([cuatri, lista]) => {
-        const h2 = document.createElement('h2');
-        h2.textContent = cuatri;
-        const contenedor = document.createElement('div');
-        contenedor.className = 'grid';
-        lista.forEach(m => contenedor.appendChild(crearMateria(m)));
-        document.getElementById(cuatri === 'Complementarias' ? 'complementarias' : 'plan').appendChild(h2);
-        document.getElementById(cuatri === 'Complementarias' ? 'complementarias' : 'plan').appendChild(contenedor);
-      });
-      cargarEstado();
-      actualizarBloqueos();
+    // Materias especiales
+    const especiales = materias.filter(m => m.tipo === "especial");
+    if (especiales.length > 0) {
+      const especDiv = document.createElement("div");
+      especDiv.innerHTML = "<h2>Materias especiales (Ingreso e Idiomas)</h2><div class='grid'></div>";
+      const grid = especDiv.querySelector(".grid");
+      especiales.forEach(m => grid.appendChild(crearMateria(m)));
+      container.appendChild(especDiv);
     }
+  }
 
-    function guardarEstado() {
-      const estados = {};
-      document.querySelectorAll('.materia').forEach(m => {
-        estados[m.dataset.id] = m.classList.contains('aprobada');
-      });
-      localStorage.setItem('estadoMaterias', JSON.stringify(estados));
-    }
-
-    function cargarEstado() {
-      const estados = JSON.parse(localStorage.getItem('estadoMaterias') || '{}');
-      document.querySelectorAll('.materia').forEach(m => {
-        if (estados[m.dataset.id]) m.classList.add('aprobada');
-      });
-    }
-
-    function actualizarBloqueos() {
-      const aprobadas = new Set();
-      document.querySelectorAll('.materia.aprobada').forEach(m => aprobadas.add(m.dataset.id));
-
-      document.querySelectorAll('.materia').forEach(m => {
-        const correlativas = JSON.parse(m.dataset.correlativas);
-        let faltan = correlativas.filter(c => !aprobadas.has(c));
-        m.classList.toggle('bloqueada', faltan.length > 0 && correlativas.length);
-        const tooltip = m.querySelector('.tooltip');
-        if (tooltip) {
-          tooltip.textContent = 'Correlativas:\n' + (correlativas.length ? correlativas.map(c => aprobadas.has(c) ? `✅ ${c}` : `❌ ${c}`).join('\n') : 'Ninguna');
-        }
-      });
-    }
-
-    render();
-  </script>
+  renderMalla();
+</script>
 </body>
 </html>
+materias_js = """
+    { nombre: "Desarrollo Emprendedor", id: "des_empr", correlativas: [], tipo: "general", anio: 1, cuatri: 1 },
+    { nombre: "Psicología Evolutiva 1", id: "evo1", correlativas: [], tipo: "general", anio: 1, cuatri: 1 },
+    { nombre: "Introducción a la Psicología", id: "intro_psico", correlativas: [], tipo: "general", anio: 1, cuatri: 1 },
+    { nombre: "Neuroanatomía y Neurofisiología", id: "neuro1", correlativas: [], tipo: "general", anio: 1, cuatri: 1 },
+    { nombre: "Antropología", id: "antro", correlativas: [], tipo: "general", anio: 1, cuatri: 1 },
+    { nombre: "Epistemología", id: "epistemo", correlativas: [], tipo: "general", anio: 1, cuatri: 2 },
+    { nombre: "Introducción a la Filosofía", id: "filo", correlativas: [], tipo: "general", anio: 1, cuatri: 2 },
+    { nombre: "Neuropsicología", id: "neuro2", correlativas: ["neuro1"], tipo: "general", anio: 1, cuatri: 2 },
+    { nombre: "Psicología Evolutiva 2", id: "evo2", correlativas: ["evo1"], tipo: "general", anio: 1, cuatri: 2 },
+    { nombre: "Escuelas, Sistemas y Corrientes", id: "corrientes", correlativas: ["intro_psico"], tipo: "general", anio: 1, cuatri: 2 },
+    { nombre: "Métodos y Técnicas de Investigación Social", id: "metodo_inv", correlativas: ["epistemo"], tipo: "general", anio: 2, cuatri: 1 },
+    { nombre: "Práctica Solidaria", id: "solidaria", correlativas: [], tipo: "general", anio: 2, cuatri: 1 },
+    { nombre: "Psicoestadística", id: "psicoest", correlativas: [], tipo: "general", anio: 2, cuatri: 1 },
+    { nombre: "Psicología Clínica", id: "psico_clinica", correlativas: [], tipo: "general", anio: 2, cuatri: 1 },
+    { nombre: "Psicología Evolutiva 3", id: "evo3", correlativas: ["evo2"], tipo: "general", anio: 2, cuatri: 1 },
+    { nombre: "Teoría Psicológica 1", id: "teo1", correlativas: ["corrientes"], tipo: "general", anio: 2, cuatri: 1 },
+    { nombre: "Actualización Psicológica 1", id: "act1", correlativas: [], tipo: "general", anio: 2, cuatri: 2 },
+    { nombre: "Psicología Social y Comunitaria", id: "social", correlativas: [], tipo: "general", anio: 2, cuatri: 2 },
+    { nombre: "Técnicas e Instrumentos de Exploración 1", id: "explora1", correlativas: ["psico_clinica"], tipo: "general", anio: 2, cuatri: 2 },
+    { nombre: "Psicopatología 1", id: "psico1", correlativas: ["psico_clinica", "evo3", "teo1"], tipo: "general", anio: 2, cuatri: 2 },
+    { nombre: "Teoría Psicológica 2", id: "teo2", correlativas: ["corrientes", "teo1"], tipo: "general", anio: 2, cuatri: 2 },
+    { nombre: "Ética y Deontología Profesional", id: "etica", correlativas: [], tipo: "general", anio: 3, cuatri: 1 },
+    { nombre: "Psicología Institucional y Psicohigiene", id: "institucional", correlativas: [], tipo: "general", anio: 3, cuatri: 1 },
+    { nombre: "Psicología Laboral", id: "laboral", correlativas: ["social"], tipo: "organizacional", anio: 3, cuatri: 1 },
+    { nombre: "Psicología Jurídica", id: "juridica", correlativas: ["psico1"], tipo: "general", anio: 3, cuatri: 1 },
+    { nombre: "Psicopatología 2", id: "psico2", correlativas: ["psico1"], tipo: "general", anio: 3, cuatri: 1 },
+    { nombre: "Teoría Psicológica 3", id: "teo3", correlativas: ["teo1", "teo2"], tipo: "general", anio: 3, cuatri: 1 },
+    { nombre: "Actualización Psicológica 2", id: "act2", correlativas: ["act1"], tipo: "general", anio: 3, cuatri: 2 },
+    { nombre: "Psicología Organizacional", id: "organizacional", correlativas: ["laboral"], tipo: "organizacional", anio: 3, cuatri: 2 },
+    { nombre: "Psicopatología 3", id: "psico3", correlativas: ["psico2"], tipo: "general", anio: 3, cuatri: 2 },
+    { nombre: "Psicoterapia 1", id: "psicoterapia1", correlativas: ["psico2"], tipo: "clinica", anio: 3, cuatri: 2 },
+    { nombre: "Teoría Psicológica 4", id: "teo4", correlativas: ["psico1"], tipo: "general", anio: 3, cuatri: 2 },
+    { nombre: "Técnicas Proyectivas 1", id: "proy1", correlativas: ["explora1"], tipo: "general", anio: 3, cuatri: 2 },
+    { nombre: "Grupo y Liderazgo", id: "grupo", correlativas: [], tipo: "general", anio: 4, cuatri: 1 },
+    { nombre: "Técnicas e Instrumentos de Exploración 2", id: "explora2", correlativas: ["explora1"], tipo: "general", anio: 4, cuatri: 1 },
+    { nombre: "Diagnóstico Organizacional", id: "diag_org", correlativas: ["organizacional"], tipo: "organizacional", anio: 4, cuatri: 1 },
+    { nombre: "Diseño y Evaluación de Puestos", id: "puestos", correlativas: ["organizacional"], tipo: "organizacional", anio: 4, cuatri: 1 },
+    { nombre: "Psicología de las Conductas Adictivas", id: "adicciones", correlativas: ["psico2"], tipo: "clinica", anio: 4, cuatri: 1 },
+    { nombre: "Psicología Educacional", id: "educacional", correlativas: ["psico2"], tipo: "general", anio: 4, cuatri: 1 },
+    { nombre: "Psicoterapia 2", id: "psicoterapia2", correlativas: ["psicoterapia1"], tipo: "clinica", anio: 4, cuatri: 1 },
+    { nombre: "Técnicas Proyectivas 2", id: "proy2", correlativas: ["proy1"], tipo: "general", anio: 4, cuatri: 1 },
+    { nombre: "Práctica Profesional de Psicología", id: "practica", correlativas: ["adicciones", "educacional", "psicoterapia2", "explora2", "proy2", "psico2"], tipo: "general", anio: 4, cuatri: 2 },
+    { nombre: "Psicología Forense", id: "forense", correlativas: ["juridica"], tipo: "general", anio: 4, cuatri: 2 },
+    { nombre: "Psicoterapia 3", id: "psicoterapia3", correlativas: ["psicoterapia1", "psicoterapia2"], tipo: "clinica", anio: 4, cuatri: 2 },
+    { nombre: "Selección de Personal", id: "seleccion", correlativas: ["puestos", "proy1"], tipo: "organizacional", anio: 4, cuatri: 2 },
+    { nombre: "Actualización Psicológica 3", id: "act3", correlativas: ["act2"], tipo: "general", anio: 4, cuatri: 2 },
+    { nombre: "Métodos y Técnicas de Investigación Psicológica", id: "metodo_psico", correlativas: ["psicoest"], tipo: "general", anio: 4, cuatri: 2 },
+    { nombre: "Clínica Psicológica", id: "clinica_final", correlativas: ["psicoterapia1"], tipo: "clinica", anio: 5, cuatri: 1 },
+    { nombre: "Estrategias de Intervención Comunitaria", id: "intervencion", correlativas: ["social"], tipo: "general", anio: 5, cuatri: 1 },
+    { nombre: "Estrategias y Métodos de Capacitación", id: "capacitacion", correlativas: ["diag_org"], tipo: "organizacional", anio: 5, cuatri: 1 },
+    { nombre: "Orientación Vocacional y Ocupacional", id: "vocacional", correlativas: ["educacional"], tipo: "general", anio: 5, cuatri: 1 },
+    { nombre: "Psicoterapia 4", id: "psicoterapia4", correlativas: ["psicoterapia1", "psicoterapia3"], tipo: "clinica", anio: 5, cuatri: 1 },
+    { nombre: "Seminario Final de Psicología", id: "seminario", correlativas: ["practica"], tipo: "general", anio: 5, cuatri: 1 },
+    { nombre: "Teoría y Práctica de la Motivación", id: "motivacion", correlativas: ["diag_org"], tipo: "organizacional", anio: 5, cuatri: 1 },
+"""
