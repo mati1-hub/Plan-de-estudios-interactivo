@@ -1,197 +1,305 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Malla Interactiva Psicología</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .materia {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin: 5px;
-      border-radius: 5px;
-      background-color: #fff;
-      cursor: pointer;
-      transition: 0.3s;
-      position: relative;
-    }
-
-    .materia:hover {
-      background-color: #e6f7ff;
-    }
-
-    .materia.aprobada {
-      text-decoration: line-through;
-      background-color: #d4edda;
-    }
-
-    .materia.bloqueada {
-      background-color: #f8d7da;
-      cursor: not-allowed;
-    }
-
-    .materia .tooltip {
-      visibility: hidden;
-      background-color: #333;
-      color: #fff;
-      text-align: left;
-      padding: 5px;
-      border-radius: 3px;
-      position: absolute;
-      z-index: 1;
-      bottom: 120%;
-      left: 50%;
-      transform: translateX(-50%);
-      opacity: 0;
-      transition: opacity 0.3s;
-      white-space: nowrap;
-    }
-
-    .materia:hover .tooltip {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    .anio {
-      margin-bottom: 40px;
-    }
-
-    .cuatrimestre {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .separado {
-      margin-top: 50px;
-    }
-
-    .titulo-cuatrimestre {
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    @media (max-width: 600px) {
-      .cuatrimestre {
-        flex-direction: column;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Malla Psicología Siglo 21 - Mapa Mental Interactivo</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  h1 {
+    margin-bottom: 10px;
+  }
+  select {
+    padding: 5px;
+    margin-right: 10px;
+    font-size: 16px;
+  }
+  #malla {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: flex-start;
+  }
+  .materia {
+    border: 1px solid #ccc;
+    padding: 12px 15px;
+    border-radius: 8px;
+    width: 240px;
+    position: relative;
+    user-select: none;
+    background: #f9f9f9;
+  }
+  .materia.aprobado label {
+    text-decoration: line-through;
+    color: gray;
+  }
+  .materia.bloqueado {
+    background: #eee;
+    color: #aaa;
+  }
+  .materia label {
+    cursor: pointer;
+  }
+  .checkbox {
+    margin-right: 8px;
+    cursor: pointer;
+  }
+  #lineasCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  #descargarBtn {
+    margin-top: 20px;
+    padding: 10px 18px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+</style>
 </head>
 <body>
-  <h1>Malla Interactiva - Psicología</h1>
 
-  <div id="malla"></div>
+<h1>Malla Psicología Siglo 21</h1>
 
-  <script>
-    const materias = [
-      { id: "aps21", nombre: "Aprender en el Siglo 21", cuatrimestre: "1-1", correlativas: [] },
-      { id: "tecnomodelos", nombre: "Tecnología, Humanidades y Modelos Globales", cuatrimestre: "1-1", correlativas: [] },
-      { id: "desarrolloemprendedor", nombre: "Desarrollo Emprendedor", cuatrimestre: "1-1", correlativas: [] },
-      { id: "evo1", nombre: "Psicología Evolutiva 1", cuatrimestre: "1-1", correlativas: [] },
-      { id: "intropsico", nombre: "Introducción a la Psicología", cuatrimestre: "1-1", correlativas: [] },
-      { id: "neuro", nombre: "Neuroanatomía y Neurofisiología", cuatrimestre: "1-1", correlativas: [] },
-      { id: "antropologia", nombre: "Antropología", cuatrimestre: "1-1", correlativas: [] },
-      { id: "idioma1", nombre: "Idioma Extranjero 1", cuatrimestre: "extra", correlativas: [] },
-      { id: "epistemologia", nombre: "Epistemología", cuatrimestre: "1-2", correlativas: [] },
-      { id: "filosofia", nombre: "Introducción a la Filosofía", cuatrimestre: "1-2", correlativas: [] },
-      { id: "neuropsico", nombre: "Neuropsicología", cuatrimestre: "1-2", correlativas: ["neuro"] },
-      { id: "evo2", nombre: "Psicología Evolutiva 2", cuatrimestre: "1-2", correlativas: ["evo1"] },
-      { id: "escuelas", nombre: "Escuelas, Sistemas y Corrientes", cuatrimestre: "1-2", correlativas: ["intropsico"] },
-      { id: "idioma2", nombre: "Idioma Extranjero 2", cuatrimestre: "extra", correlativas: ["idioma1"] },
-      { id: "metodologia", nombre: "Métodos y Técnicas de Investigación Social", cuatrimestre: "2-1", correlativas: ["epistemologia"] },
-      { id: "solidaria", nombre: "Práctica Solidaria", cuatrimestre: "2-1", correlativas: [] },
-      { id: "psicoestadistica", nombre: "Psicoestadística", cuatrimestre: "2-1", correlativas: [] },
-      { id: "psiclinica", nombre: "Psicología Clínica", cuatrimestre: "2-1", correlativas: [] },
-      { id: "evo3", nombre: "Psicología Evolutiva 3", cuatrimestre: "2-1", correlativas: ["evo2"] },
-      { id: "teo1", nombre: "Teoría Psicológica 1", cuatrimestre: "2-1", correlativas: ["escuelas"] },
-      { id: "idioma3", nombre: "Idioma Extranjero 3", cuatrimestre: "extra", correlativas: ["idioma2"] },
-      { id: "actual1", nombre: "Actualización Psicológica 1", cuatrimestre: "2-2", correlativas: [] },
-      { id: "social", nombre: "Psicología Social y Comunitaria", cuatrimestre: "2-2", correlativas: [] },
-      { id: "tecnicas1", nombre: "Técnicas e Instrumentos de Exploración 1", cuatrimestre: "2-2", correlativas: ["psiclinica"] },
-      { id: "psicopato1", nombre: "Psicopatología 1", cuatrimestre: "2-2", correlativas: ["psiclinica", "evo3", "teo1"] },
-      { id: "teo2", nombre: "Teoría Psicológica 2", cuatrimestre: "2-2", correlativas: ["escuelas", "teo1"] },
-      { id: "idioma4", nombre: "Idioma Extranjero 4", cuatrimestre: "extra", correlativas: ["idioma3"] }
-    ];
+<label for="filtroAnio">Filtrar por Año:</label>
+<select id="filtroAnio">
+  <option value="todos">Todos</option>
+</select>
 
-    const malla = document.getElementById("malla");
+<label for="filtroCuatrimestre">Filtrar por Cuatrimestre:</label>
+<select id="filtroCuatrimestre">
+  <option value="todos">Todos</option>
+</select>
 
-    const anios = ["1", "2"];
-    const cuatris = ["1", "2"];
+<div id="malla"></div>
 
-    anios.forEach(anio => {
-      const divAnio = document.createElement("div");
-      divAnio.classList.add("anio");
-      const titulo = document.createElement("h2");
-      titulo.textContent = `${anio}° Año`;
-      divAnio.appendChild(titulo);
+<button id="descargarBtn">Descargar materias aprobadas</button>
 
-      cuatris.forEach(cuatrimestre => {
-        const divCuatri = document.createElement("div");
-        divCuatri.classList.add("cuatrimestre");
-        const tituloCuatri = document.createElement("div");
-        tituloCuatri.classList.add("titulo-cuatrimestre");
-        tituloCuatri.textContent = `${cuatrimestre === "1" ? "Primer" : "Segundo"} Cuatrimestre`;
-        divAnio.appendChild(tituloCuatri);
-        materias.filter(m => m.cuatrimestre === `${anio}-${cuatrimestre}`).forEach(m => {
-          const div = document.createElement("div");
-          div.classList.add("materia");
-          div.id = m.id;
-          div.textContent = m.nombre;
+<canvas id="lineasCanvas"></canvas>
 
-          if (m.correlativas.length > 0) {
-            div.classList.add("bloqueada");
-            const tooltip = document.createElement("span");
-            tooltip.classList.add("tooltip");
-            tooltip.textContent = `Correlativas: ${m.correlativas.map(id => materias.find(mat => mat.id === id).nombre).join(", ")}`;
-            div.appendChild(tooltip);
-          }
+<script>
+// Todas las materias sin materias de ingreso ni idiomas extranjeros
+const materias = [
+  // 1er año
+  { id: 'de', nombre: 'Desarrollo Emprendedor', año: 1, cuatrimestre: 1, prereqs: [] },
+  { id: 'pe1', nombre: 'Psicología Evolutiva 1', año: 1, cuatrimestre: 1, prereqs: [] },
+  { id: 'ip', nombre: 'Introducción a la Psicología', año: 1, cuatrimestre: 1, prereqs: [] },
+  { id: 'nn', nombre: 'Neuroanatomía y Neurofisiología', año: 1, cuatrimestre: 1, prereqs: [] },
+  { id: 'ant', nombre: 'Antropología', año: 1, cuatrimestre: 1, prereqs: [] },
 
-          divCuatri.appendChild(div);
-        });
-        divAnio.appendChild(divCuatri);
-      });
+  { id: 'ep', nombre: 'Epistemología', año: 1, cuatrimestre: 2, prereqs: [] },
+  { id: 'if', nombre: 'Introducción a la Filosofía', año: 1, cuatrimestre: 2, prereqs: [] },
+  { id: 'np', nombre: 'Neuropsicología', año: 1, cuatrimestre: 2, prereqs: ['nn'] },
+  { id: 'pe2', nombre: 'Psicología Evolutiva 2', año: 1, cuatrimestre: 2, prereqs: ['pe1'] },
+  { id: 'esc', nombre: 'Escuelas, Sistemas y Corrientes a la Psicología', año: 1, cuatrimestre: 2, prereqs: ['ip'] },
 
-      malla.appendChild(divAnio);
+  // 2do año
+  { id: 'mtis', nombre: 'Métodos y Técnicas de Investigación Social', año: 2, cuatrimestre: 3, prereqs: ['ep'] },
+  { id: 'ps', nombre: 'Práctica Solidaria', año: 2, cuatrimestre: 3, prereqs: [] },
+  { id: 'pe', nombre: 'Psicoestadística', año: 2, cuatrimestre: 3, prereqs: [] },
+  { id: 'pc', nombre: 'Psicología Clínica', año: 2, cuatrimestre: 3, prereqs: [] },
+  { id: 'pe3', nombre: 'Psicología Evolutiva 3', año: 2, cuatrimestre: 3, prereqs: ['pe2'] },
+  { id: 'tp1', nombre: 'Teoría Psicológica 1', año: 2, cuatrimestre: 3, prereqs: ['esc'] },
+
+  { id: 'ap1', nombre: 'Actualización Psicológica 1', año: 2, cuatrimestre: 4, prereqs: [] },
+  { id: 'psc', nombre: 'Psicología Social y Comunitaria', año: 2, cuatrimestre: 4, prereqs: [] },
+  { id: 'tie1', nombre: 'Técnicas e Instrumentos de Exploración 1', año: 2, cuatrimestre: 4, prereqs: ['pc'] },
+  { id: 'pp1', nombre: 'Psicopatología 1', año: 2, cuatrimestre: 4, prereqs: ['pc', 'pe3', 'tp1'] },
+  { id: 'tp2', nombre: 'Teoría Psicológica 2', año: 2, cuatrimestre: 4, prereqs: ['esc', 'tp1'] },
+
+  // 3er año
+  { id: 'edpp', nombre: 'Ética y Deontología Profesional de la Psicología', año: 3, cuatrimestre: 5, prereqs: [] },
+  { id: 'pip', nombre: 'Psicología Institucional y Psico Higiene', año: 3, cuatrimestre: 5, prereqs: [] },
+  { id: 'pl', nombre: 'Psicología Laboral', año: 3, cuatrimestre: 5, prereqs: ['psc'] },
+  { id: 'pj', nombre: 'Psicología Jurídica', año: 3, cuatrimestre: 5, prereqs: ['pp1'] },
+  { id: 'pp2', nombre: 'Psicopatología 2', año: 3, cuatrimestre: 5, prereqs: ['pp1'] },
+  { id: 'tp3', nombre: 'Teoría Psicológica 3', año: 3, cuatrimestre: 5, prereqs: ['tp1', 'tp2'] },
+
+  { id: 'ap2', nombre: 'Actualización Psicológica 2', año: 3, cuatrimestre: 6, prereqs: ['ap1'] },
+  { id: 'po', nombre: 'Psicología Organizacional', año: 3, cuatrimestre: 6, prereqs: ['pl'] },
+  { id: 'pp3', nombre: 'Psicopatología 3', año: 3, cuatrimestre: 6, prereqs: ['pp2'] },
+  { id: 'pt1', nombre: 'Psicoterapia 1', año: 3, cuatrimestre: 6, prereqs: ['pp2'] },
+  { id: 'tp4', nombre: 'Teoría Psicológica 4', año: 3, cuatrimestre: 6, prereqs: ['pp2'] },
+  { id: 'tpj1', nombre: 'Técnicas Proyectivas 1', año: 3, cuatrimestre: 6, prereqs: ['tie1'] },
+
+  // 4to año
+  { id: 'gl', nombre: 'Grupo y Liderazgo', año: 4, cuatrimestre: 7, prereqs: [] },
+  { id: 'tie2', nombre: 'Técnicas e Instrumentos de Exploración 2', año: 4, cuatrimestre: 7, prereqs: ['tie1'] },
+  { id: 'do', nombre: 'Diagnóstico Organizacional', año: 4, cuatrimestre: 7, prereqs: ['po'] },
+  { id: 'dep', nombre: 'Diseño y Evaluación de Puestos', año: 4, cuatrimestre: 7, prereqs: ['po'] },
+  { id: 'pca', nombre: 'Psicología de las Conductas Adictivas', año: 4, cuatrimestre: 7, prereqs: ['pp2'] },
+  { id: 'pedu', nombre: 'Psicología Educacional', año: 4, cuatrimestre: 7, prereqs: ['pp2'] },
+  { id: 'pt2', nombre: 'Psicoterapia 2', año: 4, cuatrimestre: 7, prereqs: ['pt1'] },
+  { id: 'tpj2', nombre: 'Técnicas Proyectivas 2', año: 4, cuatrimestre: 7, prereqs: ['tpj1'] },
+
+  { id: 'ppp', nombre: 'Práctica Profesional de Psicología', año: 4, cuatrimestre: 8, prereqs: ['pca', 'pedu', 'pt2', 'tie2', 'tpj2', 'pp2'] },
+  { id: 'pf', nombre: 'Psicología Forense', año: 4, cuatrimestre: 8, prereqs: ['pj'] },
+  { id: 'pt3', nombre: 'Psicoterapia 3', año: 4, cuatrimestre: 8, prereqs: ['pt1', 'pt2'] },
+  { id: 'sp', nombre: 'Selección de Personal', año: 4, cuatrimestre: 8, prereqs: ['dep', 'tpj1'] },
+  { id: 'ap3', nombre: 'Actualización Psicológica 3', año: 4, cuatrimestre: 8, prereqs: ['ap2'] },
+  { id: 'mtip', nombre: 'Métodos y Técnicas de Investigación Psicológica', año: 4, cuatrimestre: 8, prereqs: ['pe'] },
+
+  // 5to año
+  { id: 'cp', nombre: 'Clínica Psicológica', año: 5, cuatrimestre: 9, prereqs: ['pt1'] },
+  { id: 'eic', nombre: 'Estrategias de Intervención Comunitaria', año: 5, cuatrimestre: 9, prereqs: ['psc'] },
+  { id: 'emc', nombre: 'Estrategias y Métodos de Capacitación', año: 5, cuatrimestre: 9, prereqs: ['do'] },
+  { id: 'ovo', nombre: 'Orientación Vocacional y Ocupacional', año: 5, cuatrimestre: 9, prereqs: ['pedu'] },
+  { id: 'pt4', nombre: 'Psicoterapia 4', año: 5, cuatrimestre: 9, prereqs: ['pt3', 'pt1'] },
+  { id: 'sfp', nombre: 'Seminario Final de Psicología', año: 5, cuatrimestre: 9, prereqs: ['ppp'] },
+  { id: 'tpm', nombre: 'Teoría y Práctica de la Motivación', año: 5, cuatrimestre: 9, prereqs: ['do'] },
+];
+
+// Estado: materias aprobadas
+let estado = {};
+
+// Obtener selectores y contenedor
+const filtroAnio = document.getElementById('filtroAnio');
+const filtroCuatri = document.getElementById('filtroCuatrimestre');
+const contMalla = document.getElementById('malla');
+const canvas = document.getElementById('lineasCanvas');
+const ctx = canvas.getContext('2d');
+const btnDescargar = document.getElementById('descargarBtn');
+
+// Rellenar filtros únicos de años y cuatrimestres
+function cargarFiltros() {
+  const años = [...new Set(materias.map(m => m.año))].sort((a,b)=>a-b);
+  const cuatris = [...new Set(materias.map(m => m.cuatrimestre))].sort((a,b)=>a-b);
+
+  años.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a;
+    opt.textContent = `Año ${a}`;
+    filtroAnio.appendChild(opt);
+  });
+
+  cuatris.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = `Cuatrimestre ${c}`;
+    filtroCuatri.appendChild(opt);
+  });
+}
+
+// Saber si materia está desbloqueada (todos sus prereqs aprobados)
+function estaDesbloqueada(materia) {
+  return materia.prereqs.every(id => estado[id] === true);
+}
+
+// Filtrar materias según filtro seleccionado
+function filtrarMaterias() {
+  let filtroA = filtroAnio.value;
+  let filtroC = filtroCuatri.value;
+
+  return materias.filter(m => {
+    let pasoA = filtroA === 'todos' || m.año == filtroA;
+    let pasoC = filtroC === 'todos' || m.cuatrimestre == filtroC;
+    return pasoA && pasoC;
+  });
+}
+
+// Renderiza materias en formato mapa mental vertical, con checkbox y clases
+function renderMalla() {
+  const visibles = filtrarMaterias();
+  contMalla.innerHTML = '';
+  materias.forEach(m => estado[m.id] = estado[m.id] ?? false); // inicializa undefined
+
+  visibles.forEach(materia => {
+    const div = document.createElement('div');
+    div.className = 'materia';
+    if (!estaDesbloqueada(materia)) div.classList.add('bloqueado');
+    if (estado[materia.id]) div.classList.add('aprobado');
+    div.setAttribute('data-id', materia.id);
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'checkbox';
+    checkbox.checked = estado[materia.id];
+    checkbox.disabled = !estaDesbloqueada(materia);
+    checkbox.addEventListener('change', () => {
+      estado[materia.id] = checkbox.checked;
+      renderMalla();
+      dibujarLineas();
     });
 
-    const extra = document.createElement("div");
-    extra.classList.add("separado");
-    const tituloExtra = document.createElement("h2");
-    tituloExtra.textContent = "Materias Extras (Idioma + Ingreso)";
-    extra.appendChild(tituloExtra);
-    const contExtra = document.createElement("div");
-    contExtra.classList.add("cuatrimestre");
+    const label = document.createElement('label');
+    label.textContent = materia.nombre;
+    label.setAttribute('for', materia.id);
 
-    materias.filter(m => m.cuatrimestre === "extra").forEach(m => {
-      const div = document.createElement("div");
-      div.classList.add("materia");
-      div.id = m.id;
-      div.textContent = m.nombre;
-      if (m.correlativas.length > 0) {
-        div.classList.add("bloqueada");
-        const tooltip = document.createElement("span");
-        tooltip.classList.add("tooltip");
-        tooltip.textContent = `Correlativas: ${m.correlativas.map(id => materias.find(mat => mat.id === id).nombre).join(", ")}`;
-        div.appendChild(tooltip);
-      }
-      contExtra.appendChild(div);
+    div.appendChild(checkbox);
+    div.appendChild(label);
+
+    contMalla.appendChild(div);
+  });
+
+  setTimeout(dibujarLineas, 100); // espera DOM listo para dibujar líneas
+}
+
+// Dibuja líneas entre materias y sus correlativas
+function dibujarLineas() {
+  const visibles = filtrarMaterias();
+
+  // Ajustar tamaño canvas a viewport
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  visibles.forEach(m => {
+    const elem = document.querySelector(`.materia[data-id="${m.id}"]`);
+    if (!elem) return;
+
+    const rect = elem.getBoundingClientRect();
+    const x1 = rect.left + rect.width / 2;
+    const y1 = rect.top + rect.height / 2;
+
+    m.prereqs.forEach(prId => {
+      const prElem = document.querySelector(`.materia[data-id="${prId}"]`);
+      if (!prElem) return;
+      const prRect = prElem.getBoundingClientRect();
+      const x2 = prRect.left + prRect.width / 2;
+      const y2 = prRect.top + prRect.height / 2;
+
+      // Línea curva estilo "bezier"
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      const midX = (x1 + x2) / 2;
+      ctx.bezierCurveTo(midX, y2, midX, y1, x1, y1);
+      ctx.stroke();
     });
+  });
+}
 
-    extra.appendChild(contExtra);
-    malla.appendChild(extra);
-  </script>
-</body>
-</html>
+// Descargar materias aprobadas como JSON
+btnDescargar.addEventListener('click', () => {
+  const aprobadas = Object.entries(estado)
+    .filter(([id, val]) => val)
+    .map(([id]) => materias.find(m => m.id === id))
+    .filter(Boolean)
+    .map(m => ({ id: m.id, nombre: m.nombre, año: m.año, cuatrimestre: m.cuatrimestre }));
+
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(aprobadas, null, 2));
+  const a = document.createElement('a');
+  a.setAttribute('href', dataStr);
+  a.setAttribute('download', 'materias_aprobadas.json');
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+});
+
+// Detectar cambio en filtros para actualizar
+filtroAnio.addEventListener('change', renderMalla);
+filtroCuatri.addEventListener('change', renderMalla);
+
+// Inicializar
+cargarFiltros();
+renderMalla();
+
+// Redibujar líneas si ventana cambia tamaño o scroll
+window.addEventListener('resize', dibujarLineas);
+window.addEventListener('scroll', dibujarLineas
